@@ -180,3 +180,74 @@ evalExpAr (Op2 Mod exp1 exp2) = evalExpAr exp1 `mod` evalExpAr exp2
 --               then penalty = 2
 --             else penalty = 1
 --       else penalty = 0
+
+--ex
+--Lt (Var (V "v3")) (Const 0) / Atrib (V "v1") (Const 0)
+-- opposed :: Condition -> -> Bool 
+-- opposed exp = opp 
+-- where
+--   opp = False
+--     if getGType exp == G_VC and getOpType exp == OP_VC 
+--       then
+--         if getCompType exp == Eqq 
+--           then 
+--             if 
+--             --daca const sunt dif => opposed = True
+--         else if getCompType exp == L_t or getCompType exp == G_t or getCompType exp == Diff 
+--           then
+--             --daca const sunt egale => opposed = False
+
+--             --trebuie scoasa const de aici
+
+
+--getVarIndexFromAssignment :: Operations -> Int 
+--op de forma Atrib (V "vx") (....)
+--cum iau doar V ul din tot assignment ul?
+--getVarIndexFromAssignment assignment = tail (Atrib assignment)
+
+--get const from expAr
+-- getConst :: Condition -> Int
+-- getConst (Const i) = i 
+-- getConst (Lt e1 e2) = getConstAux e1 e2
+-- getConst (Gt e1 e2) = getConstAux e1 e2
+-- getConst (Eq e1 e2) = getConstAux e1 e2
+-- getConst (Dif e1 e2) = getConstAux e1 e2
+
+penaltiesValues :: Condition -> (Gp, Dependency)
+penaltiesValues Nil = (0, False)
+penaltiesValues T = (0, False)
+penaltiesValues F = (0, False)
+penaltiesValues (c1 :&: c2) = (gp1+gp2, dep1 || dep2)
+    where (gp1,dep1) = localPenalty c1 
+          (gp2,dep2) = localPenalty c2 
+penaltiesValues (c1 :|: c2) = (min gp1 gp2, dep1 || dep2)
+    where (gp1,dep1) = localPenalty c1 
+          (gp2,dep2) = localPenalty c2 
+penaltiesValues c = localPenalty c
+
+
+localPenalty :: Condition -> (Gp, Dependency)
+localPenalty c = (gp, dep)
+                  where
+                    dep = False
+                    if getGType c == G_PV || getGType c == G_VC || getGType c == G_VV 
+                      then 
+                        gp = 0
+                      else gp = 
+
+
+penalty = if constLeft || constRight
+then penaltyLocal
+else 0
+
+penaltiesValues :: Condition -> Condition -> ExpAr -> VarMem -> (Gp, Dependency, Int)
+penaltiesValues Nil _ _ _ = (0, False, 0)
+penaltiesValues T _ _ _ = (0, False, 0)
+penaltiesValues F _ _ _ = (0, False, 0)
+penaltiesValues (c1 :&: c2) c3 e v = (gp1+gp2, dep1 || dep2, vp1 + vp2)
+    where (gp1,dep1, vp1) = localPenalty c1 c3 e v
+          (gp2,dep2, vp2) = localPenalty c2 c3 e v
+penaltiesValues (c1 :|: c2) c3 e v = (min gp1 gp2, dep1 || dep2, min vp1 vp2)
+    where (gp1,dep1, vp1) = localPenalty c1 c3 e v
+          (gp2,dep2, vp2) = localPenalty c2 c3 e v 
+penaltiesValues c c3 e v = localPenalty c c3 e  v

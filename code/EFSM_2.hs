@@ -23,7 +23,8 @@ data Condition = Nil |
                 Dif ExpAr ExpAr |
                 Eq ExpAr ExpAr deriving (Eq, Show)
 
-data ExpAr = Const Int |
+data ExpAr = NilE |
+            Const Int | 
              Var VarMem |
              Param String |
              ExpAr :+: ExpAr |
