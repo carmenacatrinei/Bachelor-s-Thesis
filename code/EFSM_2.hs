@@ -24,7 +24,7 @@ data Condition = Nil |
                 Eq ExpAr ExpAr deriving (Eq, Show)
 
 data ExpAr = NilE |
-            Const Int | 
+             Const Int | 
              Var VarMem |
              Param String |
              ExpAr :+: ExpAr |
