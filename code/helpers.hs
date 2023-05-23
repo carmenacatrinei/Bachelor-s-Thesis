@@ -3,6 +3,7 @@ import EFSM_2
 import Data.Maybe
 import Data.List
 
+inf = 10000
 --Assignment Type and Variable Penalty
 type VarPenalty = (Int, Int) 
 
@@ -25,6 +26,7 @@ data CompType = L_t | L_te | G_t | G_te | Diff | Eqq deriving (Eq, Show)
 
 --Transitions Array
 data TransArray = TrA { 
+                            nameTrA :: String,
                             getVarPenalty :: [VarPenalty],
                             getGp :: Gp,
                             getDependecy :: Dependency
@@ -273,7 +275,7 @@ getPenalty cond e opposed = penalty
   where
     penalty =
       if opposed == True 
-        then 10000
+        then inf
       else
       ---G_PV
         if getGType cond == G_PV 
@@ -420,9 +422,31 @@ getPenalty cond e opposed = penalty
 
 
 --isDefClear
--- isDefClear :: Int -> Int -> Int -> Bool 
--- isDefClear iT1 iT2 iT3 = 
+--ia fiecare tranzitie dintre index1 si index2 si assignment ul pt fiecare si verfica daca assign are var curenta
+--parcurgerea ca in getTransitionMatrix
+
+
 
 --check method
+
+--i din affecting j din affected-by sper
+-- check :: Path -> Int -> Int -> Int -> Int 
+-- check p i j vs = result  
+--                 where 
+--                   found = False 
+--                   p = j + 1 
+--                   if p > 1 && found == False 
+--                     then checkAux i j vs 
+--                   else result = result + 60 
+
+-- checkAux :: Int -> Int -> Int -> Int 
+-- checkAux i j p vs = res 
+--                     where 
+--                       p = j
+
+--check :: Transition -> Transition -> VarMem -> Int
+
+
+                  
 
 --compute

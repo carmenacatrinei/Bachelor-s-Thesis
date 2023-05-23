@@ -1,28 +1,33 @@
 module FTP where
 import Helpers
 import EFSM_2 
+import GA
+import Examples
 ---------------------------------------
 
+
 --Penalties values for variables
-penaltiesValues :: Condition -> Condition -> ExpAr -> VarMem -> (Int, Dependency)
-penaltiesValues Nil _ _ _ = (0, False)
-penaltiesValues T _ _ _ = (0, False)
-penaltiesValues F _ _ _ = (0, False)
-penaltiesValues (c1 :&: c2) c3 e v = (vp1+vp2, dep1 || dep2)
-    where (vp1,dep1) = penaltiesValues c1 c3 e v
-          (vp2,dep2) = penaltiesValues c2 c3 e v
-penaltiesValues (c1 :|: c2) c3 e v = (min vp1 vp2, dep1 || dep2)
-    where (vp1,dep1) = penaltiesValues c1 c3 e v
-          (vp2,dep2) = penaltiesValues c2 c3 e v 
-penaltiesValues c c3 e v = localPenalty c c3 e v
+penaltiesValues :: Path -> Int -> Int -> Condition -> Condition -> ExpAr -> VarMem -> (Int, Dependency)
+penaltiesValues _ _ _ Nil _ _ _ = (0, False)
+penaltiesValues _ _ _ T _ _ _ = (0, False)
+penaltiesValues _ _ _ F _ _ _ = (0, False)
+penaltiesValues p index1 index2 (c1 :&: c2) c3 e v = (vp1+vp2, dep1 || dep2)
+    where (vp1,dep1) = penaltiesValues p index1 index2 c1 c3 e v
+          (vp2,dep2) = penaltiesValues p index1 index2 c2 c3 e v
+penaltiesValues p index1 index2 (c1 :|: c2) c3 e v = (min vp1 vp2, dep1 || dep2)
+    where (vp1,dep1) = penaltiesValues p index1 index2 c1 c3 e v
+          (vp2,dep2) = penaltiesValues p index1 index2 c2 c3 e v 
+penaltiesValues p index1 index2 c c3 e v = localPenalty p index1 index2 c c3 e v
 
 --localPenalty pentru variabile
-localPenalty :: Condition -> Condition -> ExpAr -> VarMem -> (Int, Dependency) --Int pentru penalty-ul fiecarei variabile
-localPenalty cond cond1 exp cv = (vp, dep)
+localPenalty :: Path -> Int -> Int-> Condition -> Condition -> ExpAr -> VarMem -> (Int, Dependency) --Int pentru penalty-ul fiecarei variabile
+localPenalty p index1 index2 cond cond1 exp cv = (vp, dep)
     where
       gt = getGType cond --DIN AFFECTED-BY
       gt1 = getGType cond1 --DIN AFFECTING
       op = getOpType exp --DIN AFFECTING
+      --index1 = --affecting
+      --index2 = --affected-by
       --c1 = ""
       --c2 = ""
 
@@ -66,11 +71,11 @@ localPenalty cond cond1 exp cv = (vp, dep)
 
       --garda 2 cu assignment 1
       opposedAssignment = if (constLeft || constRight) && gt == G_VC && op == OP_VC
-        then ((gop cond && constG == constExp) || (gopEq cond && constG /= constExp)) -- && isDefClear(index1, index2, index var curenta)
+        then ((gop cond && constG == constExp) || (gopEq cond && constG /= constExp)) && isDefClear p index1 index2 cv
         else False
 
       --garda 2 cu garda 1
-      opposedGuard = if (constLeft1 || constRight1) && (constLeft || constRight) && gt1 == G_VC -- && isDefClear(index1, index2, index var curenta)
+      opposedGuard = if (constLeft1 || constRight1) && (constLeft || constRight) && gt1 == G_VC && isDefClear p index1 index2 cv
         then ((constG == constG1) && (gop1 cond cond1 || gop1 cond1 cond || gop2 cond cond1 || gop2 cond1 cond || gop3 cond cond1 || gop3 cond1 cond)) || ((constG /= constG1) && (gopEq cond && gopEq cond1))
         else False
 
@@ -85,7 +90,6 @@ localPenalty cond cond1 exp cv = (vp, dep)
         else 0
 
 ------------------------------------------------------------------------------
-
 
 --calculul gp-ului
 guardPenaltyValue :: Condition -> ExpAr -> Gp
@@ -111,14 +115,17 @@ guardPenaltyValue cond exp = gp
 -------------------------------------------------
 
 --TrA [[(Int, Int), (Int,Int), (Int,Int)...], Int, Bool]
-getTransitionArray :: Transition -> Transition -> Int -> Int -> TransArray 
-getTransitionArray tr1 tr2 iT1 iT2 = TrA penalties gp dep 
+getTransitionArray :: Path -> Transition -> Transition -> Int -> Int -> TransArray 
+getTransitionArray p tr1 tr2 iT1 iT2 = TrA nameTr penalties gp dep 
   --e
     where 
         g1 = condition tr1 --tr1 = affected-by
         g2 = condition tr2 --tr2 = affecting
         assignments1 = operations tr2 -- DIN AFFECTING
         variables = vars efsm
+        name1 = name tr1 --affected-by
+        name2 = name tr2 --affecting
+        nameTr = name1 ++ name2
 
         --V var scot constructorul
         penaltiesAux = [ computePenalty var  | var <- variables ]
@@ -145,10 +152,94 @@ getTransitionArray tr1 tr2 iT1 iT2 = TrA penalties gp dep
                 (vp, dep) = if length l == 0 
                         then (0, False)
                         else let expr = head l in 
-                          penaltiesValues g1 g2 expr cv --am schimbat 1 cu 2
+                          penaltiesValues p iT1 iT2 g1 g2 expr cv --am schimbat 1 cu 2
         gp = guardPenaltyValue g1 NilE     --inversat g2 cu g1      
                 
 ----------------------------------------------------------------------------------------------------
+-----test only------
+-- ch1 :: Chromosome
+-- ch1 = [1,1,1,1]
+
+
+-- chToPath :: Path
+-- chToPath = chromosomeToPath (S "s1") ch1
+
+-- validChToPath = isValid chToPath
+
+-----end test only-----
+
+--trebuie adaugata conditia de FTP! + index
+--,validChToPath == True, isValid (P[tr, tr1])
+
+--pe diagonala
+getTransitionMatrix :: Path -> [TransArray]
+getTransitionMatrix (P p) = [getTransitionArray (P p) tr1 tr i j| i <- [0..length p - 1], j <- [i ..length p - 1], let tr1 = p!!j , let tr = p!!i  ]
+
+------------------------------------------------------------------
+isDefClear :: Path -> Int -> Int -> VarMem -> Bool 
+isDefClear p iT1 iT2 cv = True
+
+
+--compute
+
+--i affected-by
+--j affecting
+compute :: Path -> Int
+compute (P ftp) = result1 + auxResults
+      where
+        matrix = getTransitionMatrix (P ftp)
+        -- varsArray = [False | v <- vars efsm]
+
+        result1 = if isValid (P ftp) == False
+                    then inf 
+                    else 0 
+        
+        n = length ftp
+        
+        auxResults = sum [getAuxResult pi | pi <- [n - 1..0]]
+        getAuxResult pi = auxRes + listAuxRes [False | v <- vars efsm] (pi - 1) 0
+            where 
+              varsArray = [False | v <- vars efsm]
+              pj = pi 
+              auxRes = getGp (getTrA (P ftp) matrix pi pj)
+             -- listAuxRes = [[ | varBool <- varsArray, varBool == False] | j <-[pj-1..0], let trA =  getTrA (P ftp) matrix pi j, getDependecy trA == True ]
+              listAuxRes varsArray 0 resList = resList 
+              listAuxRes varsArray j resList = 
+                let trA =  getTrA (P ftp) matrix pi j
+                  in 
+                    if getDependecy trA == True
+                      then 
+                        let varsArrayAux = [func vs e varBool | (varBool, vs) <- zip varsArray [0..], let e = (getVarPenalty trA) !! vs]
+                            func vs e varBool = 
+                              if fst e < 0 && varBool == False 
+                                then (True, if snd e > 0 then snd e else 0)
+                                else 
+                                  if fst e == 0 && varBool == False && snd e > 0 
+                                    then (False, snd e)
+                                    else if fst e == 0 && varBool == False
+                                      then (False, 0)
+                                    else if fst e > 0 && varBool == False 
+                                      then (True, if snd e > 0 then snd e + check (P ftp) pi j vs else 0)
+                                    else 
+                                      (varBool, 0)     
+                            varsArray1 = map fst varsArrayAux 
+                            resList1 = resList + sum (map snd varsArrayAux)
+                           
+                          in listAuxRes varsArray1 (j - 1) resList1
+                      else listAuxRes varsArray (j - 1) resList     
+
+getTrA :: Path -> [TransArray] -> Int -> Int -> TransArray
+getTrA (P ftp) matrix pi pj = trA 
+          where 
+            name1 = name (ftp !! pi) --affected-by cu i
+            name2 = name (ftp !! pj) --affecting cu j
+            nameTr = name1 ++ name2
+            trA = head [trA | trA <- matrix, nameTrA trA == nameTr]
+
+check :: Path -> Int -> Int -> Int -> Int
+check p pi pj vs = undefined
+
+
 
 --conditia din guard t2
 --e = atrib t1
@@ -157,6 +248,10 @@ getTransitionArray tr1 tr2 iT1 iT2 = TrA penalties gp dep
 --prima atribuire din ti care contine var curenta
 --pt fiecare var 
 
+
+--check si compute cu Path pt ftp
+
+--isdefclear pot sa ii dau direct variabila ca parametru
 
 --la getTransitionArray luam doar pt o singura variabila, cazul v1 + v2 > const nu e acoperit
 ---------------------------------------------------------------
