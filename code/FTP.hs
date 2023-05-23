@@ -156,17 +156,6 @@ getTransitionArray p tr1 tr2 iT1 iT2 = TrA nameTr penalties gp dep
         gp = guardPenaltyValue g1 NilE     --inversat g2 cu g1      
                 
 ----------------------------------------------------------------------------------------------------
------test only------
--- ch1 :: Chromosome
--- ch1 = [1,1,1,1]
-
-
--- chToPath :: Path
--- chToPath = chromosomeToPath (S "s1") ch1
-
--- validChToPath = isValid chToPath
-
------end test only-----
 
 --trebuie adaugata conditia de FTP! + index
 --,validChToPath == True, isValid (P[tr, tr1])
@@ -176,11 +165,24 @@ getTransitionMatrix :: Path -> [TransArray]
 getTransitionMatrix (P p) = [getTransitionArray (P p) tr1 tr i j| i <- [0..length p - 1], j <- [i ..length p - 1], let tr1 = p!!j , let tr = p!!i  ]
 
 ------------------------------------------------------------------
+
 isDefClear :: Path -> Int -> Int -> VarMem -> Bool 
-isDefClear p iT1 iT2 cv = True
+isDefClear (P p) iT1 iT2 cv = result
+  where 
+    result = and [isDefClearAux pi | pi <- [iT1..iT2 - 1]]
+    isDefClearAux pi = auxRes 
+      where
+        --tranzitia de pe pozitia pi din path
+        nameTr = [name tranP | tranP <- p] !! pi
+        tr = head [tran | tran <- transitions efsm, nameTr == name tran]
+
+        assignmentsTr = [assignment | assignment <- operations tr]
+        auxRes = and [cv == aVar | Atrib aVar exp <- assignmentsTr]
 
 
---compute
+---------------------------------
+
+--compute function
 
 --i affected-by
 --j affecting
@@ -228,6 +230,7 @@ compute (P ftp) = result1 + auxResults
                           in listAuxRes varsArray1 (j - 1) resList1
                       else listAuxRes varsArray (j - 1) resList     
 
+--returneaza tranzitia de pe pozitia i j din matrice
 getTrA :: Path -> [TransArray] -> Int -> Int -> TransArray
 getTrA (P ftp) matrix pi pj = trA 
           where 
@@ -236,22 +239,40 @@ getTrA (P ftp) matrix pi pj = trA
             nameTr = name1 ++ name2
             trA = head [trA | trA <- matrix, nameTrA trA == nameTr]
 
+
 check :: Path -> Int -> Int -> Int -> Int
-check p pi pj vs = undefined
+check p pi pj vs = 
+  let result = 0
+      found = False
+      k = pj + 1
+      matrix = getTransitionMatrix p
+      checkAux p k result found = 
+        if k > 0 && not found 
+          then let kp = k - 1 
+                   trA = getTrA p matrix pi pj
+                   opIntType = fst ((getVarPenalty trA) !! vs )
+                in if opIntType /= 0 
+                   then 
+                    if opIntType == -2 
+                      then checkAux p kp (result + 60) True 
+                      else if opIntType == -1 
+                        then checkAux p kp (result + 20) True 
+                        else checkAux p kp (result + 40 + (check p kp (kp - 1) (opIntType - 1))) True
+                  else checkAux p kp result False
+        else if found == True 
+          then result
+        else result + 60
+  in checkAux p k result found
+
 
 
 
 --conditia din guard t2
 --e = atrib t1
 
-      
 --prima atribuire din ti care contine var curenta
 --pt fiecare var 
 
-
---check si compute cu Path pt ftp
-
---isdefclear pot sa ii dau direct variabila ca parametru
 
 --la getTransitionArray luam doar pt o singura variabila, cazul v1 + v2 > const nu e acoperit
 ---------------------------------------------------------------

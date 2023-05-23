@@ -251,3 +251,34 @@ penaltiesValues (c1 :|: c2) c3 e v = (min gp1 gp2, dep1 || dep2, min vp1 vp2)
     where (gp1,dep1, vp1) = localPenalty c1 c3 e v
           (gp2,dep2, vp2) = localPenalty c2 c3 e v 
 penaltiesValues c c3 e v = localPenalty c c3 e  v
+
+-- --path-ul dat ca parametru e ftp-ul
+-- check :: Path -> Int -> Int -> Int -> Int
+-- check p pi pj vs = result + resultAux
+--   where 
+--     found = False 
+--     k = pj + 1
+--     matrix = getTransitionMatrix (P p)
+--     result = 0
+    
+--     if k > 0 && found == False 
+--       then resultAux 
+--         where 
+--           trA = getTrA (P p) matrix pi pj
+--           opIntType = fst (getVarPenalty trA) !! vs 
+
+--           if opIntType /= 0 
+--             then 
+--               found = true 
+--               if opIntType == -2 
+--                 then resultAux = 60
+--                 else if opIntType == -1
+--                   then resultAux = 20
+--                   else resultAux = 20 + check(p - 1, p - 2, opIntType - 1) 
+--             else 
+--               resultAux = check(p - 1, p - 2, opIntType - 1) 
+
+--           -- k = k - 1
+--       else if found == True 
+--         then result 
+--         else result + 60
