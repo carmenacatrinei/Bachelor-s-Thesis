@@ -282,3 +282,86 @@ penaltiesValues c c3 e v = localPenalty c c3 e  v
 --       else if found == True 
 --         then result 
 --         else result + 60
+
+
+  -- countRes (gene:chr) = if (geneToPath (start efsm) gene) == []
+        --                         then 1000 + countRes chr 
+        --                         else 
+        --                             countResAux tp + countRes chr
+        --                              where 
+        --                                 tp = geneToPath (start efsm) gene
+        --                                 countResAux (x:xs) = 1 + countResAux xs
+   
+                                 
+
+        -- computePenalties chr = map updatePenalties chr
+        --     where 
+        --       updatePenalties tp = length [1 | t <- tran, t `elem` transition]
+        --         where tran = geneToPath (start efsm) tp
+
+        
+        -- countRes res (gene:chr) = updateRes1 gene
+        --   where 
+        --     tran = geneToPath (start efsm) gene
+        --     updateRes1 tran = if length tran == 0 
+        --                         then 1000 
+                                -- else 1 + countRes res chr
+        -- countRes _ res [] = res
+        -- countRes i res (tp:chr) = countRes i (res + len) chr
+        --     where len = length tp' 
+        --           tp' = geneToPath (start efsm) tp
+
+
+
+-- fitness2 :: Chromosome -> Double 
+-- fitness2 chr = resultFinal + zeros
+--     where 
+--         result1 = 0
+--         --sau length de (chr !! 0)?
+--         penalties = [0 | i <- [1..length transition]]
+--         --start efsm trebuie?
+--         results = [getResult (geneToPath (start efsm) gene) | gene <- chrGenes chr]
+--         getResult :: Path -> (Int, [Int])
+--         getResult tp = if length tp /= 0
+--                         then 
+--                             (result1 + 1, incrementTransitions penalties tp)
+--                         else 
+--                             (result1 + 1000, penalties)
+                    
+--         incrementTransitions :: [Int] -> Path -> [Int]            
+--         incrementTransitions penalties tp =
+--             foldl (\acc tran -> incrementAtIndex tran 1 acc) penalties tp
+
+--         incrementAtIndex :: Int -> Int -> [Int] -> [Int]
+--         incrementAtIndex index increment xs =
+--             take index xs ++ [xs !! index + increment] ++ drop (index + 1) xs 
+               
+                
+--         sumResults results1 = 
+--             let (res, pen) = unzip results1
+--                 lst = map sum $ pen --transpose?
+--                 totalSum = sum res 
+--             in (totalSum, lst)
+
+--         resultFinal1 = fst (sumResults results)
+
+--         resultFinal = norm (fromIntegral resultFinal1)
+
+--         penList = snd (sumResults results)
+
+--         countZeros penList1 = length (filter (==0) penList1)
+
+--         zeros = fromIntegral (countZeros penList) 
+
+
+-- tran = transition
+-- penaltiesAux = [0 | i <- [1..length transition]]        
+-- computePenaltiesAux (P(x:xs)) = func tran penaltiesAux x 
+-- func [] [] x = []
+-- func (x:xs) (y:ys) z = [if z == x then y + 1 else y] ++ func xs ys z     
+
+
+-- myAdd :: Int -> Int -> Int
+-- myAdd 0 0 = 0
+-- myAdd res 0 = res 
+-- myAdd res val = res + myAdd res (val - 1) 

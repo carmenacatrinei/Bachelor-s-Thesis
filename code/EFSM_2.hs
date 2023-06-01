@@ -1,7 +1,6 @@
 module EFSM_2 where
 import Data.List
 import Data.Char
-import GA
 
 newtype State = S String deriving (Eq, Show)
 
@@ -69,14 +68,13 @@ tran5 = Transition "t5" (S "s2") (S "s2") (Lt (Var (V "v3")) (Const 0)) [I "bb"]
 tran6 = Transition "t6" (S "s3") (S "s3") (Lt (Var (V "v1")) (Param "p1") :&: Gt (Param "p1") (Param "p2")) [I "b"] []
 
 testPath = P ([tran1, tran2, tran3, tran4])
---afiseaza prea multe! 
 
 efsm :: EFSM
 efsm =
     EFSM {states = [S "s1", S "s2", S "s3"], transitions = transition, vars = [V "v1", V "v2", V "v3"], start = S "s1"}
 -----------------------
 
----{{{{{{{{{{{{{{{{{{{{{{{{{{{{}}}}}}}}}}}}}}}}}}}}}}}}}}}}
+---IS VALID-----
 newtype Path = P [Transition] deriving (Eq, Show)
 
 isValid1 :: Path -> Bool
@@ -93,7 +91,7 @@ isValid3 (P paths) = and [s2 t1 == s1 t2 |(t1, t2) <- zip paths (tail paths) ]
 
 isValid :: Path -> Bool
 isValid (P paths) = isValid1 (P paths) && isValid2 (P paths) && isValid3 (P paths) && paths /= []
----{{{{{{{{{{{{{{{{{{{{{{{{{{{{}}}}}}}}}}}}}}}}}}}}}}}}}}}}
+---END IS VALID-----
 
 -------------------Solution Encoding-------------------
 --from Ch to Path
@@ -148,15 +146,6 @@ rangesAndStates  = zip (states efsm) ranges
 getRangeForState :: State -> Int
 getRangeForState (S st) = head [t2 | (t1, t2) <- rangesAndStates, t1 == S st]
 
-
-chromosomeToPath :: State -> Chromosome -> Path
-chromosomeToPath (S st) [] =  P []
-chromosomeToPath (S st) (c:chr) = P (t : x)
-                                        where
-                                            P x = chromosomeToPath st2 chr
-                                            m = c `div` getRangeForState (S st)
-                                            t = leavingStateS (S st) !! m
-                                            st2 = s2 (getmThTransLeavingStateS (S st) m)
 
 -----------------End Solution Encoding-----------------
 

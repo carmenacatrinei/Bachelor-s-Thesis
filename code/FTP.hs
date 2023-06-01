@@ -1,8 +1,6 @@
 module FTP where
 import Helpers
 import EFSM_2 
-import GA
-import Examples
 ---------------------------------------
 
 
@@ -28,8 +26,6 @@ localPenalty p index1 index2 cond cond1 exp cv = (vp, dep)
       op = getOpType exp --DIN AFFECTING
       --index1 = --affecting
       --index2 = --affected-by
-      --c1 = ""
-      --c2 = ""
 
       --VERIFICA VAR CURENTA
       constLeft = if hasCv (getLeftExp cond) cv 
@@ -157,9 +153,6 @@ getTransitionArray p tr1 tr2 iT1 iT2 = TrA nameTr penalties gp dep
                 
 ----------------------------------------------------------------------------------------------------
 
---trebuie adaugata conditia de FTP! + index
---,validChToPath == True, isValid (P[tr, tr1])
-
 --pe diagonala
 getTransitionMatrix :: Path -> [TransArray]
 getTransitionMatrix (P p) = [getTransitionArray (P p) tr1 tr i j| i <- [0..length p - 1], j <- [i ..length p - 1], let tr1 = p!!j , let tr = p!!i  ]
@@ -186,6 +179,7 @@ isDefClear (P p) iT1 iT2 cv = result
 
 --i affected-by
 --j affecting
+
 compute :: Path -> Int
 compute (P ftp) = result1 + auxResults
       where
@@ -198,7 +192,7 @@ compute (P ftp) = result1 + auxResults
         
         n = length ftp
         
-        auxResults = sum [getAuxResult pi | pi <- [n - 1..0]]
+        auxResults = sum [getAuxResult pi | pi <- [n - 1, n - 2..1]]
         getAuxResult pi = auxRes + listAuxRes [False | v <- vars efsm] (pi - 1) 0
             where 
               varsArray = [False | v <- vars efsm]
@@ -230,6 +224,7 @@ compute (P ftp) = result1 + auxResults
                           in listAuxRes varsArray1 (j - 1) resList1
                       else listAuxRes varsArray (j - 1) resList     
 
+
 --returneaza tranzitia de pe pozitia i j din matrice
 getTrA :: Path -> [TransArray] -> Int -> Int -> TransArray
 getTrA (P ftp) matrix pi pj = trA 
@@ -239,7 +234,7 @@ getTrA (P ftp) matrix pi pj = trA
             nameTr = name1 ++ name2
             trA = head [trA | trA <- matrix, nameTrA trA == nameTr]
 
-
+    
 check :: Path -> Int -> Int -> Int -> Int
 check p pi pj vs = 
   let result = 0
@@ -263,8 +258,6 @@ check p pi pj vs =
           then result
         else result + 60
   in checkAux p k result found
-
-
 
 
 --conditia din guard t2

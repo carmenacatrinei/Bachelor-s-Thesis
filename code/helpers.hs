@@ -421,6 +421,8 @@ getPenalty cond e opposed = penalty
 ---------------------------------------------------------------  
 
 
+getTranIndex :: Transition -> Int 
+getTranIndex tr = fromMaybe (-1) (elemIndex tr transition)
 --isDefClear
 --ia fiecare tranzitie dintre index1 si index2 si assignment ul pt fiecare si verfica daca assign are var curenta
 --parcurgerea ca in getTransitionMatrix

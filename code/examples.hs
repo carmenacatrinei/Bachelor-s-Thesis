@@ -11,7 +11,7 @@ import GA
 testnOT = nOT (S "s1")
 
 ch1 :: Chromosome
-ch1 = [1,1,1,1]
+ch1 = [[1,1,1,1], [1,2,1,2]]
 --ch1 = 
 
 chToPath :: Path
