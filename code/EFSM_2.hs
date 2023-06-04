@@ -99,6 +99,10 @@ isValid (P paths) = isValid1 (P paths) && isValid2 (P paths) && isValid3 (P path
 numberOfStates ::  Int
 numberOfStates = length (states efsm)
 
+--number of Transitions in efsm
+numberOfTotalTr :: Int 
+numberOfTotalTr = length transition
+
 --fct aux pt numberOfTransitions
 nOT :: State -> Int
 nOT (S st) = length [1 | t <- transition, s1 t == S st]

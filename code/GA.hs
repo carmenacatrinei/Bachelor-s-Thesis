@@ -1,4 +1,5 @@
 module GA where
+import Moo.GeneticAlgorithm.Multiobjective
 import Moo.GeneticAlgorithm.Continuous
 import EFSM_2
 import Data.List
@@ -60,25 +61,57 @@ fitness2 chr = resultFinal + fromIntegral zeros
                 func [] [] x = []
                 func (x:xs) (y:ys) z = [if z == x then y + 1 else y] ++ func xs ys z
 
-
---selection op
-
 --mop 
---mop = [(Minimizing, fitness1), (Minimizing, fitness2)]
+mop = [(Minimizing, fitness1), (Minimizing, fitness2)]
 
 --initializare
 --genereaza o lista de lungime random de liste de lungime stabilita initial 
 --fiecare sublista are intregi din intervalul [1, lcm - 1]
 --ArraySolution.java din ga, liniile 45-70
-initial = []
+--popsize = 100
+generations = 100
+
+upperBound :: Int 
+upperBound = lcmnumberOfTransitions
+
+pathSize :: Int
+pathSize = length numberOfTransitions
+
+maxSize :: Int
+maxSize = numberOfTotalTr
+
+minSize :: Int
+minSize = 1
+
+randomSize :: Rand Int 
+randomSize = getRandomR (5, maxSize)
+
+randomGen :: Rand Int
+randomGen =  getRandomR (minSize, upperBound)
+
+
+--initial :: [[Rand Int]]
+--initial = [[getRandomR (minSize, upperBound) | i <- [minSize..pathSize]]| j <- [minSize..randomSize]]
+initialize = [[]]
+
+--stop, popstate? 
+step = stepNSGA2bt mop (onePointCrossover 0.5) (gaussianMutate 0.5 0.2)
 
 --crossover
 -- type CrossoverOp a = [Genome a] -> Rand ([Genome a], [Genome a])
-
 -- -- | A mutation operator takes a genome and returns an altered copy of it.
+--0.5 prob 0.2 sigma
 -- type MutationOp a = Genome a -> Rand (Genome a)
 
 --mutation
+
+
+-- main = do
+--   result <- runGA initialize $ loop (Generations generations) step
+--   let solutions = map takeGenome $ takeWhile ((<= 10.0) . takeObjectiveValue) result
+--   let ovs = map takeObjectiveValues $ evalAllObjectives mop solutions
+--   flip mapM_ ovs $ \[x1,x2] ->
+--       putStrLn $ show x1 ++ "\t" ++ show x2
 
 -------------------------END GA-------------------------
 
