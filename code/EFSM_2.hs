@@ -103,6 +103,7 @@ numberOfStates = length (states efsm)
 numberOfTotalTr :: Int 
 numberOfTotalTr = length transition
 
+
 --fct aux pt numberOfTransitions
 nOT :: State -> Int
 nOT (S st) = length [1 | t <- transition, s1 t == S st]

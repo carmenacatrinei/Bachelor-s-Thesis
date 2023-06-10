@@ -1,6 +1,7 @@
 module GA where
 import Moo.GeneticAlgorithm.Multiobjective
 import Moo.GeneticAlgorithm.Continuous
+import System.Random
 import EFSM_2
 import Data.List
 import FTP
@@ -9,8 +10,8 @@ import Helpers
 ---------------------------GA---------------------------
 --from library
 
-type Chromosome = Genome Gene
-type Gene = Genome Int 
+type Chromosome = Genome Gene --[[]]
+type Gene = Genome Int --[]
 
 --end from library
 
@@ -20,11 +21,26 @@ type Gene = Genome Int
 chrGenes :: Chromosome -> [Gene]
 chrGenes chr =  [ gene | gene <- chr]
 
+roundDec :: Double -> Double 
+roundDec x = (fromIntegral $ round (x * 10000)) / 10000.0
+
 --ce stare dau? 
 --nu stiu exact cum ar trebui testat, dar pare sa functioneze (poate da si valori negative??) 
---doar cu 0 si 1 merge?
+--rotunjire la 4 zecimale
 fitness1 :: Chromosome -> Double 
-fitness1 chr = sum [((fromIntegral (1 - val) :: Double) / fromIntegral inf) | gene <- chrGenes chr, let val = compute (geneToPath (start efsm) gene)]
+fitness1 chr = roundDec $ sum [1 - ((fromIntegral val :: Double) / fromIntegral inf) | gene <- chrGenes chr, let val = compute (geneToPath (start efsm) gene)]
+
+--un cr are mai multe cai
+--fitness1 complexitate
+--fitness2 acoperire tranzitii
+--test
+g1:: Chromosome
+g1 = [[0,1,0,0]]
+
+--complexitate
+--cu cat sunt mai rele caile, cu atat valoarea da mai mare
+--vreau sa fie cat mai mare, dar nu inf
+-- 
 
 --compute 3 din EFSM Parsing
          
@@ -68,11 +84,11 @@ mop = [(Minimizing, fitness1), (Minimizing, fitness2)]
 --genereaza o lista de lungime random de liste de lungime stabilita initial 
 --fiecare sublista are intregi din intervalul [1, lcm - 1]
 --ArraySolution.java din ga, liniile 45-70
---popsize = 100
+popsize = 10
 generations = 100
 
 upperBound :: Int 
-upperBound = lcmnumberOfTransitions
+upperBound = lcmnumberOfTransitions - 1
 
 pathSize :: Int
 pathSize = length numberOfTransitions
@@ -83,19 +99,24 @@ maxSize = numberOfTotalTr
 minSize :: Int
 minSize = 1
 
-randomSize :: Rand Int 
+--randomSize :: Rand Int 
 randomSize = getRandomR (5, maxSize)
 
-randomGen :: Rand Int
-randomGen =  getRandomR (minSize, upperBound)
+--randomGen :: Rand Int
+randomGen =  getRandomR (0, upperBound) 
+
+--generateRandomGene :: Rand [Gene]
+generateRandomCh = getRandomGenomes pathSize [(0, upperBound) | _ <- [1..pathSize]]
+
+-- initial :: Rand [Gene]
+-- initial = do 
 
 
---initial :: [[Rand Int]]
---initial = [[getRandomR (minSize, upperBound) | i <- [minSize..pathSize]]| j <- [minSize..randomSize]]
-initialize = [[]]
+initial :: Rand [Chromosome] 
+initial = sequence [generateRandomCh | j <- [1..popsize]]
 
 --stop, popstate? 
-step = stepNSGA2bt mop (onePointCrossover 0.5) (gaussianMutate 0.5 0.2)
+step = stepNSGA2bt mop (onePointCrossover 0.5) (gaussianMutate 0.5 0.2) 
 
 --crossover
 -- type CrossoverOp a = [Genome a] -> Rand ([Genome a], [Genome a])
