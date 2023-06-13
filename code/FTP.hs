@@ -1,6 +1,7 @@
 module FTP where
 import Helpers
 import EFSM_2 
+import Inputs
 ---------------------------------------
 
 
@@ -100,7 +101,11 @@ guardPenaltyValue (c1 :|: c2) exp = min gp1 gp2
   where
     gp1 = guardPenaltyValue c1 exp 
     gp2 = guardPenaltyValue c2 exp 
-guardPenaltyValue cond exp = gp 
+guardPenaltyValue cond exp = guardPenaltyValueAux cond exp
+
+  
+guardPenaltyValueAux :: Condition -> ExpAr -> Gp  
+guardPenaltyValueAux cond exp = gp  
   where
      penaltyLocal = getPenalty cond exp False 
      gt = getGType cond
@@ -182,47 +187,47 @@ isDefClear (P p) iT1 iT2 cv = result
 
 compute :: Path -> Int
 compute (P ftp) = result1 + auxResults
-      where
-        matrix = getTransitionMatrix (P ftp)
-        -- varsArray = [False | v <- vars efsm]
+  where
+    matrix = getTransitionMatrix (P ftp)
+    -- varsArray = [False | v <- vars efsm]
 
-        result1 = if isValid (P ftp) == False
-                    then inf 
-                    else 0 
-        
-        n = length ftp
-        
-        auxResults = sum [getAuxResult pi | pi <- [n - 1, n - 2..1]]
-        getAuxResult pi = auxRes + listAuxRes [False | v <- vars efsm] (pi - 1) 0
-            where 
-              varsArray = [False | v <- vars efsm]
-              pj = pi 
-              auxRes = getGp (getTrA (P ftp) matrix pi pj)
-             -- listAuxRes = [[ | varBool <- varsArray, varBool == False] | j <-[pj-1..0], let trA =  getTrA (P ftp) matrix pi j, getDependecy trA == True ]
-              listAuxRes varsArray 0 resList = resList 
-              listAuxRes varsArray j resList = 
-                let trA =  getTrA (P ftp) matrix pi j
-                  in 
-                    if getDependecy trA == True
-                      then 
-                        let varsArrayAux = [func vs e varBool | (varBool, vs) <- zip varsArray [0..], let e = (getVarPenalty trA) !! vs]
-                            func vs e varBool = 
-                              if fst e < 0 && varBool == False 
-                                then (True, if snd e > 0 then snd e else 0)
+    result1 = if isValid (P ftp) == False
+                then inf 
+                else 0 
+    
+    n = length ftp
+    
+    auxResults = sum [getAuxResult pi | pi <- [n - 1, n - 2..1]]
+    getAuxResult pi = auxRes + listAuxRes [False | v <- vars efsm] (pi - 1) 0
+        where 
+          varsArray = [False | v <- vars efsm]
+          pj = pi 
+          auxRes = getGp (getTrA (P ftp) matrix pi pj)
+          -- listAuxRes = [[ | varBool <- varsArray, varBool == False] | j <-[pj-1..0], let trA =  getTrA (P ftp) matrix pi j, getDependecy trA == True ]
+          listAuxRes varsArray 0 resList = resList 
+          listAuxRes varsArray j resList = 
+            let trA =  getTrA (P ftp) matrix pi j
+              in 
+                if getDependecy trA == True
+                  then 
+                    let varsArrayAux = [func vs e varBool | (varBool, vs) <- zip varsArray [0..], let e = (getVarPenalty trA) !! vs]
+                        func vs e varBool = 
+                          if fst e < 0 && varBool == False 
+                            then (True, if snd e > 0 then snd e else 0)
+                            else 
+                              if fst e == 0 && varBool == False && snd e > 0 
+                                then (False, snd e)
+                                else if fst e == 0 && varBool == False
+                                  then (False, 0)
+                                else if fst e > 0 && varBool == False 
+                                  then (True, if snd e > 0 then snd e + check (P ftp) pi j vs else 0)
                                 else 
-                                  if fst e == 0 && varBool == False && snd e > 0 
-                                    then (False, snd e)
-                                    else if fst e == 0 && varBool == False
-                                      then (False, 0)
-                                    else if fst e > 0 && varBool == False 
-                                      then (True, if snd e > 0 then snd e + check (P ftp) pi j vs else 0)
-                                    else 
-                                      (varBool, 0)     
-                            varsArray1 = map fst varsArrayAux 
-                            resList1 = resList + sum (map snd varsArrayAux)
-                           
-                          in listAuxRes varsArray1 (j - 1) resList1
-                      else listAuxRes varsArray (j - 1) resList     
+                                  (varBool, 0)     
+                        varsArray1 = map fst varsArrayAux 
+                        resList1 = resList + sum (map snd varsArrayAux)
+                        
+                      in listAuxRes varsArray1 (j - 1) resList1
+                  else listAuxRes varsArray (j - 1) resList     
 
 
 --returneaza tranzitia de pe pozitia i j din matrice

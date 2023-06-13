@@ -2,8 +2,9 @@ module Helpers where
 import EFSM_2
 import Data.Maybe
 import Data.List
+import Inputs
 
-inf = 10000
+inf = 100000
 --Assignment Type and Variable Penalty
 type VarPenalty = (Int, Int) 
 
@@ -14,7 +15,7 @@ type Gp = Int
 type Dependency = Bool 
 
 --Guard Type
-data GType = G_PV | G_VV | G_VC | G_PC | G_PP deriving (Eq, Show)
+data GType = G_PV | G_VV | G_VC | G_PC | G_PP | N_G deriving (Eq, Show)
 
 --Operator Type
 data OpType = OP_PV | OP_VV | OP_VC | NOP deriving (Eq, Show)
@@ -172,7 +173,8 @@ getGType (Gt e1 e2) = getGTypeAux e1 e2
 getGType (Gte e1 e2) = getGTypeAux e1 e2 
 getGType (Dif e1 e2) = getGTypeAux e1 e2 
 getGType (Eq e1 e2) = getGTypeAux e1 e2 
-getGType _ = error "Something went wrong!"
+getGType (Nil) = N_G
+getGType v = error (show v)
 
 -----------------------------------------------------------
 
@@ -380,7 +382,7 @@ getPenalty cond e opposed = penalty
                     -- merge doar pentru o singura variabila
                     let Const i = e in
                       if evalExpBool cond i == False
-                        then 10000
+                        then inf
                         else 0
                     ---------
                 else --end G_VC
@@ -406,7 +408,8 @@ getPenalty cond e opposed = penalty
                     else 1
       ---G_PP
       --else if getGType cond == G_PP
-          else --end getGType
+          else if getGType cond == G_PP
+            then
             if getOpType e == OP_VC || getOpType e == OP_VV || getOpType e == OP_PV
               then 0
               else
@@ -417,6 +420,7 @@ getPenalty cond e opposed = penalty
                   else if getCompType cond == L_te || getCompType cond == G_te
                     then 2
                   else 1
+           else 0
                          
 ---------------------------------------------------------------  
 
@@ -449,6 +453,85 @@ getTranIndex tr = fromMaybe (-1) (elemIndex tr transition)
 --check :: Transition -> Transition -> VarMem -> Int
 
 
+---IS VALID-----
+
+isValid1 :: Path -> Bool
+isValid1 (P[]) = True
+isValid1 (P(p:paths)) = elem p (transitions efsm) && isValid1 (P paths)
+
+isValid2 :: Path -> Bool
+isValid2 (P[]) = False
+isValid2 (P paths) = s1 t0 == start efsm
+                        where t0 = head paths
+
+isValid3 :: Path -> Bool
+isValid3 (P paths) = and [s2 t1 == s1 t2 |(t1, t2) <- zip paths (tail paths) ]
+
+isValid :: Path -> Bool
+isValid (P paths) = isValid1 (P paths) && isValid2 (P paths) && isValid3 (P paths) && paths /= []
+---END IS VALID-----
+
+
+-------------------Solution Encoding-------------------
+--from Ch to Path
+
+numberOfStates ::  Int
+numberOfStates = length (states efsm)
+
+--number of Transitions in efsm
+numberOfTotalTr :: Int 
+numberOfTotalTr = length transition
+
+
+--fct aux pt numberOfTransitions
+nOT :: State -> Int
+nOT (S st) = length [1 | t <- transition, s1 t == S st]
+
+numberOfTransitions ::  [Int]
+numberOfTransitions = [nOT st |  st <- states efsm]
+
+myGcd :: Int -> Int -> Int
+myGcd 0 0 = 1
+myGcd x 0 = x
+myGcd x y = myGcd y (x `mod` y)
+
+myLcm :: Int -> Int -> Int
+myLcm x y = (x * y) `div` myGcd x y
+
+myLcmList :: [Int] -> Int
+myLcmList [] = 1
+myLcmList (x:xs) = if x == 0
+                    then myLcmList xs
+                else
+                    myLcm x (myLcmList xs)
+
+lcmnumberOfTransitions :: Int
+lcmnumberOfTransitions = myLcmList numberOfTransitions
+
+divby0 :: Int -> Int -> Int
+divby0 x 0 = 1
+divby0 x y = div x y
+
+ranges :: [Int]
+ranges = [divby0 lcmnumberOfTransitions ni| ni <- numberOfTransitions]
+
+--chromosome to path
+leavingStateS :: State -> [Transition]
+leavingStateS (S st) = [t | t <- transition, s1 t == S st]
+
+--INDEXUL E DE LA 0
+getmThTransLeavingStateS :: State -> Int -> Transition
+getmThTransLeavingStateS (S st) m = leavingStateS (S st) !! m
+
+rangesAndStates :: [(State, Int)]
+rangesAndStates  = zip (states efsm) ranges
+
+--nu stiu daca trebuie lasat +1 aici sau nu
+getRangeForState :: State -> Int
+getRangeForState (S st) = head [t2 | (t1, t2) <- rangesAndStates, t1 == S st]
+
+
+-----------------End Solution Encoding-----------------
                   
 
 --compute
