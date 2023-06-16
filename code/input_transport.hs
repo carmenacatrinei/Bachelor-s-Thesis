@@ -4,7 +4,6 @@ import Data.List
 import Data.Char 
 import EFSM_2
 --Class2 Transfer Protocol EFSM
---tran8, tran9,
 transition :: [Transition]
 transition = [tran0, tran1, tran2, tran3, tran4, tran5, tran6, tran7, tran8, tran9, tran10, tran11, tran12, tran13, tran14, tran15, tran16, tran17, tran18, tran19, tran20]
 

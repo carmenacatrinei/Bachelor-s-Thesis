@@ -8,8 +8,6 @@ import EFSM_2
 transition :: [Transition]
 transition = [tran1, tran2, tran3, tran4, tran5, tran6, tran7, tran8, tran9, tran10, tran11, tran12, tran13, tran14, tran15, tran16, tran17, tran18, tran19, tran20]
 
---pentru tran0 cum ar trebui modificat?
---tran0 = Transition "t0" (S "s1") (S "s2") (Nil) [I "prop_out"] [Atrib (V "opt") (Param "prop_out"), Atrib (V "R_credit") (Const 0)]
 tran1 = Transition "t1" (S "s0") (S "s0") (Gte (Param "Pos") (Const 0) :&: Lte (Param "Pos") (Const 15) :&: Eq (Var (V "DrSt")) (Const 0)) [I "Pos"] [Atrib (V "DrSt") (Const 1)]
 tran2 = Transition "t2" (S "s0") (S "s0") (Gte (Param "Pos") (Const 0) :&: Lte (Param "Pos") (Const 15) :&: Eq (Var (V "DrSt")) (Const 1)) [I "Pos", I "Pw"] [Atrib (V "DrSt") (Const 0)]
 tran3 = Transition "t3" (S "s0") (S "s1") (Gte (Var (V "w")) (Const 15) :&: Lte (Var (V "w")) (Const 250) :&: Gte (Param "Ph") (Const 10) :&: Lte (Param "Ph") (Const 35) :&: Gte (Param "Ps") (Const 0) :&: Lte (Param "Ps") (Const 25) :&: Eq (Var (V "DrSt")) (Const 0) :&: Eq (Param "Pf") (Const 1)) [I "Pf", I "Ph", I "Ps"] [Atrib (V "Floor") (Const 1)]

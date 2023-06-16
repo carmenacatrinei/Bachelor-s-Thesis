@@ -18,17 +18,16 @@ penaltiesValues p index1 index2 (c1 :|: c2) c3 e v = (min vp1 vp2, dep1 || dep2)
           (vp2,dep2) = penaltiesValues p index1 index2 c2 c3 e v 
 penaltiesValues p index1 index2 c c3 e v = localPenalty p index1 index2 c c3 e v
 
---localPenalty pentru variabile
-localPenalty :: Path -> Int -> Int-> Condition -> Condition -> ExpAr -> VarMem -> (Int, Dependency) --Int pentru penalty-ul fiecarei variabile
+--localPenalty for variables
+localPenalty :: Path -> Int -> Int-> Condition -> Condition -> ExpAr -> VarMem -> (Int, Dependency) --Int penalty for each variable
 localPenalty p index1 index2 cond cond1 exp cv = (vp, dep)
     where
-      gt = getGType cond --DIN AFFECTED-BY
+      gt = getGType cond --FROM AFFECTED-BY
       gt1 = getGType cond1 --DIN AFFECTING
       op = getOpType exp --DIN AFFECTING
       --index1 = --affecting
       --index2 = --affected-by
 
-      --VERIFICA VAR CURENTA
       constLeft = if hasCv (getLeftExp cond) cv 
         then True 
         else False 
@@ -50,28 +49,28 @@ localPenalty p index1 index2 cond cond1 exp cv = (vp, dep)
         then True 
         else False
       
-      --const din G2
+      --const from G2
       constG = if constLeft == True && gt == G_VC 
-        then getConst (getRightExp cond) --inversate aici
+        then getConst (getRightExp cond) 
         else if constRight == True && gt == G_VC 
-          then getConst (getLeftExp cond) --inversate getLeftExp cu getRightExp si mai jos la fel
+          then getConst (getLeftExp cond) 
         else 0
 
-      --const din G1
+      --const from G1
       constG1 = if constLeft == True && gt1 == G_VC 
         then getConst (getRightExp2 cond1)
         else if constRight == True && gt1 == G_VC 
           then getConst (getLeftExp2 cond1)
         else 0
 
-      constExp = getConst exp --default 0 la getConst daca nu are constanta
+      constExp = getConst exp --default 0 for getConst
 
-      --garda 2 cu assignment 1
+      --guard 2 and assignment 1
       opposedAssignment = if (constLeft || constRight) && gt == G_VC && op == OP_VC
         then ((gop cond && constG == constExp) || (gopEq cond && constG /= constExp)) && isDefClear p index1 index2 cv
         else False
 
-      --garda 2 cu garda 1
+      --guard 2 and guard 1
       opposedGuard = if (constLeft1 || constRight1) && (constLeft || constRight) && gt1 == G_VC && isDefClear p index1 index2 cv
         then ((constG == constG1) && (gop1 cond cond1 || gop1 cond1 cond || gop2 cond cond1 || gop2 cond1 cond || gop3 cond cond1 || gop3 cond1 cond)) || ((constG /= constG1) && (gopEq cond && gopEq cond1))
         else False
@@ -79,7 +78,7 @@ localPenalty p index1 index2 cond cond1 exp cv = (vp, dep)
       -----
       opposed = opposedGuard || opposedAssignment
 
-      --penalty-urile variabilelor 
+      --variable's penalties
       penaltyLocal = getPenalty cond exp opposed
 
       vp = if constLeft || constRight
@@ -88,7 +87,7 @@ localPenalty p index1 index2 cond cond1 exp cv = (vp, dep)
 
 ------------------------------------------------------------------------------
 
---calculul gp-ului
+--gp compute
 guardPenaltyValue :: Condition -> ExpAr -> Gp
 guardPenaltyValue Nil _ = 0
 guardPenaltyValue T _ = 0
@@ -122,22 +121,20 @@ getTransitionArray p tr1 tr2 iT1 iT2 = TrA nameTr penalties gp dep
     where 
         g1 = condition tr1 --tr1 = affected-by
         g2 = condition tr2 --tr2 = affecting
-        assignments1 = operations tr2 -- DIN AFFECTING
+        assignments1 = operations tr2 -- FROM AFFECTING
         variables = vars efsm
         name1 = name tr1 --affected-by
         name2 = name tr2 --affecting
         nameTr = name1 ++ name2
 
-        --V var scot constructorul
         penaltiesAux = [ computePenalty var  | var <- variables ]
 
         ------
         penalties = [(varP, vp) | (varP, vp, _) <- penaltiesAux ]
-        --ex afisare
-        --e = error (show penalties)
+
         dep = or [d | (_, _, d) <- penaltiesAux]
         ------
-        --cv = current variable, trebuie parcurse toate var din efsm pt fiecare pereche de tranzitii
+        --cv = current variable, all variables from EFSM for each pair of transitions
         computePenalty cv =  (varP, vp, dep)
             where 
                 --penalty = 0
@@ -153,12 +150,11 @@ getTransitionArray p tr1 tr2 iT1 iT2 = TrA nameTr penalties gp dep
                 (vp, dep) = if length l == 0 
                         then (0, False)
                         else let expr = head l in 
-                          penaltiesValues p iT1 iT2 g1 g2 expr cv --am schimbat 1 cu 2
-        gp = guardPenaltyValue g1 NilE     --inversat g2 cu g1      
+                          penaltiesValues p iT1 iT2 g1 g2 expr cv 
+        gp = guardPenaltyValue g1 NilE      
                 
 ----------------------------------------------------------------------------------------------------
 
---pe diagonala
 getTransitionMatrix :: Path -> [TransArray]
 getTransitionMatrix (P p) = [getTransitionArray (P p) tr1 tr i j| i <- [0..length p - 1], j <- [i ..length p - 1], let tr1 = p!!j , let tr = p!!i  ]
 
@@ -170,7 +166,7 @@ isDefClear (P p) iT1 iT2 cv = result
     result = and [isDefClearAux pi | pi <- [iT1..iT2 - 1]]
     isDefClearAux pi = auxRes 
       where
-        --tranzitia de pe pozitia pi din path
+        --transition from position pi in the path
         nameTr = [name tranP | tranP <- p] !! pi
         tr = head [tran | tran <- transitions efsm, nameTr == name tran]
 
@@ -180,8 +176,6 @@ isDefClear (P p) iT1 iT2 cv = result
 
 ---------------------------------
 
---compute function
-
 --i affected-by
 --j affecting
 
@@ -189,7 +183,6 @@ compute :: Path -> Int
 compute (P ftp) = result1 + auxResults
   where
     matrix = getTransitionMatrix (P ftp)
-    -- varsArray = [False | v <- vars efsm]
 
     result1 = if isValid (P ftp) == False
                 then inf 
@@ -203,7 +196,6 @@ compute (P ftp) = result1 + auxResults
           varsArray = [False | v <- vars efsm]
           pj = pi 
           auxRes = getGp (getTrA (P ftp) matrix pi pj)
-          -- listAuxRes = [[ | varBool <- varsArray, varBool == False] | j <-[pj-1..0], let trA =  getTrA (P ftp) matrix pi j, getDependecy trA == True ]
           listAuxRes varsArray 0 resList = resList 
           listAuxRes varsArray j resList = 
             let trA =  getTrA (P ftp) matrix pi j
@@ -230,12 +222,12 @@ compute (P ftp) = result1 + auxResults
                   else listAuxRes varsArray (j - 1) resList     
 
 
---returneaza tranzitia de pe pozitia i j din matrice
+--returns the transition from position i j in matrix
 getTrA :: Path -> [TransArray] -> Int -> Int -> TransArray
 getTrA (P ftp) matrix pi pj = trA 
           where 
-            name1 = name (ftp !! pi) --affected-by cu i
-            name2 = name (ftp !! pj) --affecting cu j
+            name1 = name (ftp !! pi) --affected-by with i
+            name2 = name (ftp !! pj) --affecting with j
             nameTr = name1 ++ name2
             trA = head [trA | trA <- matrix, nameTrA trA == nameTr]
 
@@ -265,12 +257,4 @@ check p pi pj vs =
   in checkAux p k result found
 
 
---conditia din guard t2
---e = atrib t1
-
---prima atribuire din ti care contine var curenta
---pt fiecare var 
-
-
---la getTransitionArray luam doar pt o singura variabila, cazul v1 + v2 > const nu e acoperit
 ---------------------------------------------------------------

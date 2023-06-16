@@ -21,7 +21,7 @@ data GType = G_PV | G_VV | G_VC | G_PC | G_PP | N_G deriving (Eq, Show)
 data OpType = OP_PV | OP_VV | OP_VC | NOP deriving (Eq, Show)
 
 ------------------------------------------------
---Comparator Type - added
+--Comparator Type
 data CompType = L_t | L_te | G_t | G_te | Diff | Eqq deriving (Eq, Show)
 ---------------------------------------------------
 
@@ -34,7 +34,7 @@ data TransArray = TrA {
                          } deriving (Show, Eq)
 
 -------------------------------
---getConst scoate const dintr-o expresie aritmetica si intoarce Int
+--get const from an arithmetic exp
 getConst :: ExpAr -> Int 
 getConst (NilE) = 0
 getConst (Const i) = i
@@ -47,7 +47,7 @@ getConst (e1 :/: e2) = getConst e1 `div` getConst e2
 getConst (e1 :%: e2) = getConst e1 `mod` getConst e2
 --------------------------------------------
 
---getVar scoate var dintr-o expresie aritmetica si intoarce VarMem
+--get var from an arithmetic exp
 getVar :: ExpAr -> VarMem
 getVar (NilE) = error "Something went wrong!"
 getVar (Const i) = error "Something went wrong!"
@@ -59,6 +59,7 @@ getVar (e1 :*: e2) = getVar e1
 getVar (e1 :/: e2) = getVar e1 
 getVar (e1 :%: e2) = getVar e1 
 --------------------
+
 --checks if any params
 hasParams :: ExpAr -> Bool
 hasParams (Const i) = False
@@ -88,9 +89,7 @@ hasConst :: ExpAr -> Bool
 hasConst NilE = False
 hasConst e = not (hasParams e || hasVars e)
 
---contine var curenta
---primeste o expresie aritmetica si o variabila de memorie si verifica daca expresia contine variabila data ca param
---intoarce bool
+--contains the current variable
 hasCv :: ExpAr -> VarMem -> Bool
 hasCv (NilE) cv = False
 hasCv (Const i) cv = False
@@ -105,7 +104,6 @@ hasCv (e1 :%: e2) cv = hasCv e1 cv || hasCv e2 cv
 ---------------------------------------------------------------
 
 --c1 and c2
---primeste o conditie si intoarce expresia din stanga
 getLeftExp :: Condition -> ExpAr
 getLeftExp (Lt e1 e2) = e1
 getLeftExp (Gt e1 e2) = e1
@@ -115,7 +113,7 @@ getLeftExp (Dif e1 e2) = e1
 getLeftExp (Eq e1 e2) = e1
 getLeftExp (Nil) = NilE
 
---cazurile T F NU SUNT ACOPERITE, functie PENTRU CONDITIA DIN AFFECTING unde :&: si :|: nu sunt acoperite
+--T and F not covered
 getLeftExp2 :: Condition -> ExpAr
 getLeftExp2 (Nil) = NilE
 getLeftExp2 (c1 :&: c2) = getLeftExp2 c1
@@ -127,9 +125,7 @@ getLeftExp2 (Gte e1 e2) = e1
 getLeftExp2 (Dif e1 e2) = e1
 getLeftExp2 (Eq e1 e2) = e1
 
---getLeftExp (_ c1 c2) = c1   NU _ IN LOC DE CONSTRUCTOR 
 
---primeste o conditie si intoarce expresia din dreapta
 getRightExp :: Condition -> ExpAr
 getRightExp (Lt e1 e2) = e2
 getRightExp (Gt e1 e2) = e2
@@ -139,7 +135,7 @@ getRightExp (Dif e1 e2) = e2
 getRightExp (Eq e1 e2) = e2
 getRightExp (Nil) = NilE
 
---cazurile T F NU SUNT ACOPERITE, PENTRU CONDITIA DIN AFFECTING
+--T and F not covered
 getRightExp2 :: Condition -> ExpAr
 getRightExp2 (c1 :&: c2) = getLeftExp2 c1
 getRightExp2 (c1 :|: c2) = getLeftExp2 c1
@@ -189,7 +185,7 @@ getOpType e = if hasParams e == True
 
 -----------------------------------------------------------
 
---get Comp Type - added
+--get Comp Type
 getCompType :: Condition -> CompType
 getCompType (Lt e1 e2) = L_t
 getCompType (Lte e1 e2) = L_te
@@ -222,13 +218,12 @@ evalExpAr (exp1 :%: exp2 ) i = (evalExpAr exp1 i) `mod` (evalExpAr exp2 i)
 
 --------------------------------------------------------------
 
---0 daca nu exista
---primeste o variabila de memorie si intoarce indexul acesteia
+
+--return the index of a varmem
 getVarIndexFromAssignment :: VarMem -> Int 
 getVarIndexFromAssignment var = 1 + (fromMaybe (-1) (elemIndex var (vars efsm)))
 
---primeste o expresie aritmetica dintr-o operatie de tip VV si intoarce indexul primei var gasite
---adica din v1 = v2 intoarce 2, din v1 = v2 + v3 intoarce 2
+--return the index of the first var found in an expar
 getVarIndexFromAssignment2 :: ExpAr -> Int
 getVarIndexFromAssignment2 exp = if getOpType exp == OP_VV
                                   then 1 + (fromMaybe (-1) (elemIndex (getVar exp) (vars efsm)))
@@ -243,18 +238,17 @@ getExpFromOperation :: Operations -> ExpAr
 getExpFromOperation (Atrib v exp) = exp
 
 ---------------------------------------------------------------
---normalizare
 norm :: Double -> Double
 norm d = if d > 0
           then 1 - 1.001 ** (-d)
           else 0
 
 -------------------------------------------------------------------------
---primeste o conditie si verifica daca aceasta contine < > sau !=
+-- < > !=
 gop :: Condition -> Bool 
 gop cond1 =  getCompType cond1 == L_t || getCompType cond1 == G_t || getCompType cond1 == Diff
 
---primeste o conditie si verifica daca aceasta contine =
+-- =
 gopEq :: Condition->Bool
 gopEq cond2 = getCompType cond2 == Eqq 
 
@@ -271,7 +265,7 @@ gop3 :: Condition -> Condition -> Bool
 gop3 cond1 cond2 = (getCompType cond1 == G_t || getCompType cond1 == G_te) && getCompType cond2 == L_t
 
 --------------------------
---primeste o conditie si expresia artimetica din assignment si un bool (opposed) si intoarce valoarea de penalty din tabel
+--table penalties
 getPenalty ::  Condition -> ExpAr -> Bool -> Int
 getPenalty cond e opposed = penalty
   where
@@ -379,7 +373,7 @@ getPenalty cond e opposed = penalty
                 else if getOpType e == OP_VC 
                   then
                     --INF if False and 0 otherwise 
-                    -- merge doar pentru o singura variabila
+                    -- works for a single variable
                     let Const i = e in
                       if evalExpBool cond i == False
                         then inf
@@ -427,31 +421,6 @@ getPenalty cond e opposed = penalty
 
 getTranIndex :: Transition -> Int 
 getTranIndex tr = fromMaybe (-1) (elemIndex tr transition)
---isDefClear
---ia fiecare tranzitie dintre index1 si index2 si assignment ul pt fiecare si verfica daca assign are var curenta
---parcurgerea ca in getTransitionMatrix
-
-
-
---check method
-
---i din affecting j din affected-by sper
--- check :: Path -> Int -> Int -> Int -> Int 
--- check p i j vs = result  
---                 where 
---                   found = False 
---                   p = j + 1 
---                   if p > 1 && found == False 
---                     then checkAux i j vs 
---                   else result = result + 60 
-
--- checkAux :: Int -> Int -> Int -> Int 
--- checkAux i j p vs = res 
---                     where 
---                       p = j
-
---check :: Transition -> Transition -> VarMem -> Int
-
 
 ---IS VALID-----
 
@@ -483,7 +452,7 @@ numberOfTotalTr :: Int
 numberOfTotalTr = length transition
 
 
---fct aux pt numberOfTransitions
+--aux for numberOfTransitions
 nOT :: State -> Int
 nOT (S st) = length [1 | t <- transition, s1 t == S st]
 
@@ -519,19 +488,16 @@ ranges = [divby0 lcmnumberOfTransitions ni| ni <- numberOfTransitions]
 leavingStateS :: State -> [Transition]
 leavingStateS (S st) = [t | t <- transition, s1 t == S st]
 
---INDEXUL E DE LA 0
+--INDEX starting from 0
 getmThTransLeavingStateS :: State -> Int -> Transition
 getmThTransLeavingStateS (S st) m = leavingStateS (S st) !! m
 
 rangesAndStates :: [(State, Int)]
 rangesAndStates  = zip (states efsm) ranges
 
---nu stiu daca trebuie lasat +1 aici sau nu
 getRangeForState :: State -> Int
 getRangeForState (S st) = head [t2 | (t1, t2) <- rangesAndStates, t1 == S st]
 
 
 -----------------End Solution Encoding-----------------
                   
-
---compute
