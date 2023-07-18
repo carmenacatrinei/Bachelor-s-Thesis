@@ -1,4 +1,5 @@
-# Licenta
+# Bachelor's Thesis
 
-SOFTWARE TESTING USINGEXTENDED FINITE STATE MACHINES AND GENETIC ALGORITHMS IN HASKELL
+Software Testing Using Extended Finite State Machines and Genetic Algorithms in Haskell
+More details in Bachelor's Thesis.pdf.
 
